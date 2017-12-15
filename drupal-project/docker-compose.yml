@@ -1,6 +1,6 @@
 version: "2"
 
-# Access site at http://${NAME}.dev
+# Access site at http://${NAME}.localhost
 # Point search_api_solr to http://${NAME}-solr:8983/solr/#/drupal
 
 services:
@@ -9,84 +9,95 @@ services:
     image: wodby/drupal-php:${PHP_WODBY_TAG}
     environment:
       PHP_DOCROOT: ${DOCROOT} # Relative path inside the /var/www/html/ directory.
-      PHP_SENDMAIL_PATH: /usr/sbin/sendmail -t -i -S mailhog.dev:1025
-      PHP_XDEBUG_ENABLED: 1
-      PHP_XDEBUG_REMOTE_ENABLE: 1
-      PHP_XDEBUG_REMOTE_AUTOSTART: 0
-      PHP_XDEBUG_REMOTE_CONNECT_BACK: 0
-      #
-      # Remote xdebug host. Use 172.17.0.1 for linux,
-      # or 10.254.254.254 for OSX.
-      # If using OSX, create loopback device on host once by
-      # executing `sudo ifconfig lo0 alias 10.254.254.254` (on each boot).
-      # See http://docs.docker4drupal.org/en/latest/containers/php/ .
-      PHP_XDEBUG_REMOTE_HOST: 10.254.254.254
+      PHP_SENDMAIL_PATH: /usr/sbin/sendmail -t -i -S mailhog.localhost:1025
+      PHP_FPM_MAX_CHILDREN: 16
+      PHP_MEMORY_LIMIT: 1024M
+      PHP_XDEBUG: 1
+      PHP_XDEBUG_DEFAULT_ENABLE: 1              # Renamed from PHP_XDEBUG_ENABLED in latest version.
+      PHP_XDEBUG_REMOTE_AUTOSTART: 1            # Renamed from PHP_XDEBUG_AUTOSTART in latest version.
+      PHP_XDEBUG_REMOTE_CONNECT_BACK: 0         # This is needed to respect remote.host setting bellow
+      PHP_XDEBUG_REMOTE_HOST: "10.254.254.254"  # You will also need to 'sudo ifconfig lo0 alias 10.254.254.254'
+      PHP_XDEBUG_MAX_NESTING_LEVEL: 2048
+      PHP_IDE_CONFIG: serverName=${NAME}.localhost
     volumes:
-      - ./:/var/www/html
-#      - d4d-unison-sync:/var/www/html:rw # Replace volume to this to use docker-sync for macOS users
-    links:
-      - solr
+      - ./:/var/www/html:delegated
     external_links:
       - mysql
       - dockerdns
-    network_mode: bridge # Expose to other docker-compose networks in order to use mysql etc.
+    networks:
+      - default
+      - commonapps_default
     dns:
      - ${DOCKERDNS}
 
   nginx:
-    container_name: ${NAME} # without .dev if using .dev dns
-    image: wodby/drupal-nginx:7-1.13
-    # image: wodby/drupal-nginx:8-1.13
+    container_name: ${NAME} # without .localhost if using .localhost dns
+    image: wodby/drupal-nginx:8-1.13
     environment:
       VIRTUAL_HOST: ${NAME}.dev # This tell global proxy about this container.
-      NGINX_SERVER_NAME: ${NAME}.dev
       NGINX_BACKEND_HOST: php
-      NGINX_SERVER_ROOT: ${DOCROOT} # Relative path inside the /var/www/html/ directory.
+      NGINX_SERVER_NAME: ${NAME}.localhost
+      NGINX_SERVER_ROOT: /var/www/html/${DOCROOT}
       DRUPAL_VERSION: ${DRUPAL_VERSION}  # Allowed: 7, 8.
     volumes:
-      - ./:/var/www/html
-    links:
+      - ./:/var/www/html:delegated
+    depends_on:
       - php
-    network_mode: bridge # Expose to other docker-compose networks in order to use mysql etc.
+    networks:
+      - default
+      - commonapps_default
 
-  # Solr for D8 (using solr 5.x).
   # Solr: configure search_api_solr to connect to http://${NAME}-solr:8983/solr/#/drupal
   solr:
-    image: solr:5.4.1
-    user: root
+    image: solr:6.6.0
     container_name: ${NAME}-solr # visit me at http://${NAME}-solr:8983/solr !
     volumes:
-      - ./sites/all/modules/contrib/search_api_solr/solr-conf/5.x:/myconfig/conf
+      - ./sites/all/modules/contrib/search_api_solr/solr-conf/6.x:/myconfig/conf
       - ./.solr-data:/opt/solr/server/solr/mycores
     environment:
-      VIRTUAL_HOST: ${NAME}-solr.dev
+      VIRTUAL_HOST: ${NAME}-solr.localhost
       VIRTUAL_PORT: 8983
       SOLR_UID: 0
       SOLR_USER: root # Crazyness, I know. Found no other way because docker initiates .solr-data as root.
-    network_mode: bridge
-#    external_links:
-#      - dockerdns
-    command:
+    networks:
+      - default
+      - commonapps_default
+    entrypoint:
       - solr-precreate
       - drupal
       - /myconfig
 
-# Solr for D7 (using solr 4.x).
-#  # Solr: configure search_api_solr to connect to http://${NAME}-solr:8983/solr
-#  solr:
-#    image: twinbit/docker-drupal-solr
-#    container_name: ${NAME}-solr # visit me at http://${NAME}-solr:8983/solr !
-#    volumes:
-#      - ./sites/all/modules/contrib/search_api_solr/solr-conf/4.x:/myconfig
-#      - ./.solr-data:/opt/solr/example/solr/collection1/data
-#    environment:
-#      VIRTUAL_HOST: ${NAME}-solr.dev
-#      VIRTUAL_PORT: 8983
-#    network_mode: bridge
-#    entrypoint: bash -c "cp -fr /myconfig/* solr/collection1/conf/; java -Xmx1024m -DSTOP.PORT=8984 -DSTOP.KEY=stopkey -jar start.jar"
+#  phantomjs:
+#    image: wernight/phantomjs:2
+#    volumes_from:
+#      - php
+#    links:
+#      - nginx:${NAME}.localhost
+#    networks:
+#      - default
+#      - commonapps_default
+#    entrypoint: phantomjs
+#    command: "--ssl-protocol=any --ignore-ssl-errors=true /var/www/html/vendor/jcalderonzumba/gastonjs/src/Client/main.js 8510 1024 768"
 
+#  mailhog:
+#    image: mailhog/mailhog
+#    ports:
+#      - "8002:8025"
 
+#  redis:
+#    image: redis:3.2-alpine
 
+#  memcached:
+#    image: memcached:1.4-alpine
+
+#  memcached-admin:
+#    image: phynias/phpmemcachedadmin
+#    ports:
+#      - "8006:80"
+
+#  clamd:
+#    image: dinkel/clamavd
+#    container_name: ${NAME}-clamav
 
 #  pma:
 #    image: phpmyadmin/phpmyadmin
@@ -99,45 +110,6 @@ services:
 #     ports:
 #     - "8001:80"
 
-#  mailhog:
-#    image: mailhog/mailhog
-#    ports:
-#      - "8002:8025"
-
-#  redis:
-#    image: redis:3.2-alpine
-
-  memcached:
-    image: memcached:1.4-alpine
-    network_mode: bridge
-
-#  memcached-admin:
-#    image: phynias/phpmemcachedadmin
-#    ports:
-#      - "8006:80"
-
-#  solr:
-#    image: wodby/solr:5.5-1.0.0
-##    image: wodby/solr:6.3-1.0.0
-#    environment:
-#      SOLR_HEAP: 1024m
-#    ports:
-#      - "8003:8983"
-
-#  varnish:
-#    image: wodby/drupal-varnish:1.0.0
-#    depends_on:
-#      - nginx
-#    environment:
-#      VARNISH_SECRET: secret
-#      VARNISH_BACKEND_HOST: nginx
-#      VARNISH_BACKEND_PORT: 80
-#      VARNISH_MEMORY_SIZE: 256M
-#      VARNISH_STORAGE_SIZE: 1024M
-#    ports:
-#      - "8004:6081" # HTTP Proxy
-#      - "8005:6082" # Control terminal
-
-#volumes:
-#  d4d-unison-sync:
-#    external: true
+networks:
+  commonapps_default:
+    external: true
