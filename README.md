@@ -20,8 +20,14 @@ This gives you
 
 ## To get DNS to work on your host / laptop, follow instructions:
 
+## OSX
+   Create a file _/etc/resolver/localhost containing_
+
+   _nameserver <listen address of devdns>_
+   In OSX, there's a good chance you're using boot2docker, so the listen address will probably be the output of boot2docker ip. Please note that the name of the file created in _/etc/resolver_ has to match the value of the DNS_DOMAIN setting (default "localhost").
+
 ### Ubuntu:
-   edit /etc/dhcp/dhclient.conf
+   edit _/etc/dhcp/dhclient.conf_
    add:
       supersede domain-name "localhost";
       prepend domain-name-servers 127.0.0.1;
