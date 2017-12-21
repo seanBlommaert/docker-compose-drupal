@@ -13,23 +13,23 @@ This gives you
              Username / password: `root` and `root`.
  - mailhog:  This is a mailsink with web UI where php-containers will send all email to.
              Note that only containers started with the project docker-compose.yml from this repo will use this!
-             Available at http://mailhog.localhost:8025/
- - devdns:   This is the central dns-container that provides you the .localhost domain and project hostnames.
+             Available at http://mailhog.develop:8025/
+ - devdns:   This is the central dns-container that provides you the .develop domain and project hostnames.
              If this is not started, functionality from this repo won't work well (if not at all).
 
 
 ## To get DNS to work on your host / laptop, follow instructions:
 
 ## OSX
-   Create a file _/etc/resolver/localhost containing_
+   Create a file _/etc/resolver/local containing_
 
    _nameserver <listen address of devdns>_
-   In OSX, there's a good chance you're using boot2docker, so the listen address will probably be the output of boot2docker ip. Please note that the name of the file created in _/etc/resolver_ has to match the value of the DNS_DOMAIN setting (default "localhost").
+   In OSX, there's a good chance you're using boot2docker, so the listen address will probably be the output of boot2docker ip. Please note that the name of the file created in _/etc/resolver_ has to match the value of the DNS_DOMAIN setting (default "local").
 
 ### Ubuntu:
    edit _/etc/dhcp/dhclient.conf_
    add:
-      supersede domain-name "localhost";
+      supersede domain-name "develop";
       prepend domain-name-servers 127.0.0.1;
    see: https://github.com/ruudud/devdns
 

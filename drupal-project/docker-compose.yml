@@ -1,6 +1,6 @@
 version: "2"
 
-# Access site at http://${NAME}.localhost
+# Access site at http://${NAME}.develop
 # Point search_api_solr to http://${NAME}-solr:8983/solr/#/drupal
 
 services:
@@ -9,7 +9,7 @@ services:
     image: wodby/drupal-php:${PHP_WODBY_TAG}
     environment:
       PHP_DOCROOT: ${DOCROOT} # Relative path inside the /var/www/html/ directory.
-      PHP_SENDMAIL_PATH: /usr/sbin/sendmail -t -i -S mailhog.localhost:1025
+      PHP_SENDMAIL_PATH: /usr/sbin/sendmail -t -i -S mailhog.develop:1025
       PHP_FPM_MAX_CHILDREN: 16
       PHP_MEMORY_LIMIT: 1024M
       PHP_XDEBUG: 1
@@ -18,7 +18,7 @@ services:
       PHP_XDEBUG_REMOTE_CONNECT_BACK: 0         # This is needed to respect remote.host setting bellow
       PHP_XDEBUG_REMOTE_HOST: "10.254.254.254"  # You will also need to 'sudo ifconfig lo0 alias 10.254.254.254'
       PHP_XDEBUG_MAX_NESTING_LEVEL: 2048
-      PHP_IDE_CONFIG: serverName=${NAME}.localhost
+      PHP_IDE_CONFIG: serverName=${NAME}.develop
     volumes:
       - ./:/var/www/html:delegated
     external_links:
@@ -31,12 +31,12 @@ services:
      - ${DOCKERDNS}
 
   nginx:
-    container_name: ${NAME} # without .localhost if using .localhost dns
+    container_name: ${NAME} # without .develop if using .develop dns
     image: wodby/drupal-nginx:8-1.13
     environment:
-      VIRTUAL_HOST: ${NAME}.dev # This tell global proxy about this container.
+      VIRTUAL_HOST: ${NAME}.develop # This tell global proxy about this container.
       NGINX_BACKEND_HOST: php
-      NGINX_SERVER_NAME: ${NAME}.localhost
+      NGINX_SERVER_NAME: ${NAME}.develop
       NGINX_SERVER_ROOT: /var/www/html/${DOCROOT}
       DRUPAL_VERSION: ${DRUPAL_VERSION}  # Allowed: 7, 8.
     volumes:
@@ -55,7 +55,7 @@ services:
       - ./sites/all/modules/contrib/search_api_solr/solr-conf/6.x:/myconfig/conf
       - ./.solr-data:/opt/solr/server/solr/mycores
     environment:
-      VIRTUAL_HOST: ${NAME}-solr.localhost
+      VIRTUAL_HOST: ${NAME}-solr.develop
       VIRTUAL_PORT: 8983
       SOLR_UID: 0
       SOLR_USER: root # Crazyness, I know. Found no other way because docker initiates .solr-data as root.
@@ -72,7 +72,7 @@ services:
 #    volumes_from:
 #      - php
 #    links:
-#      - nginx:${NAME}.localhost
+#      - nginx:${NAME}.develop
 #    networks:
 #      - default
 #      - commonapps_default

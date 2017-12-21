@@ -5,7 +5,7 @@ version: "2"
 # Ubuntu:
 #   edit /etc/dhcp/dhclient.conf
 #   add:
-#      supersede domain-name "localhost";
+#      supersede domain-name "develop";
 #      prepend domain-name-servers 127.0.0.1;
 #
 
@@ -36,7 +36,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - ${DNSMASQ_INTERNAL_CONFIG}:/etc/dnsmasq.conf
     environment:
-      DNS_DOMAIN: "localhost"
+      DNS_DOMAIN: "develop"
     ports:
       - "54:53/udp"
 #    ip: 172.17.254.254
@@ -62,7 +62,7 @@ services:
     container_name: mailhog
     image: mailhog/mailhog
     environment:
-      VIRTUAL_HOST: mailhog.localhost # This tell global proxy about this container.
+      VIRTUAL_HOST: mailhog.develop # This tell global proxy about this container.
       VIRTUAL_PORT: 8025
 
 #networks:
