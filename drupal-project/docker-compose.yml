@@ -32,7 +32,7 @@ services:
 
   nginx:
     container_name: ${NAME} # without .develop if using .develop dns
-    image: wodby/drupal-nginx:8-1.13
+    image: wodby/drupal-nginx:8-1.15
     environment:
       VIRTUAL_HOST: ${NAME}.develop # This tell global proxy about this container.
       NGINX_BACKEND_HOST: php
@@ -49,7 +49,7 @@ services:
 
   # Solr: configure search_api_solr to connect to http://${NAME}-solr:8983/solr/#/drupal
   solr:
-    image: solr:6.6.0
+    image: solr:6.6.4
     container_name: ${NAME}-solr # visit me at http://${NAME}-solr:8983/solr !
     volumes:
       - ./sites/all/modules/contrib/search_api_solr/solr-conf/6.x:/myconfig/conf
@@ -66,6 +66,30 @@ services:
       - solr-precreate
       - drupal
       - /myconfig
+
+#  selenium-hub:
+#    image: selenium/hub:3.12.0-cobalt
+#    container_name: ${NAME}-selenium-hub
+#    ports:
+#      - "4444:4444"
+#    networks:
+#      - default
+#      - commonapps_default
+
+#  # Chrome: To watch the tests run visit ${NAME}-chrome:5900 in a VNC viewer.
+#  chrome:
+#    image: selenium/node-chrome-debug:3.12.0-cobalt
+#    container_name: ${NAME}-chrome
+#    ports:
+#      - "5900:5900"
+#    depends_on:
+#      - selenium-hub
+#    environment:
+#      - HUB_HOST=${NAME}-selenium-hub
+#      - HUB_PORT=4444
+#    networks:
+#      - default
+#      - commonapps_default
 
 #  phantomjs:
 #    image: wernight/phantomjs:2
