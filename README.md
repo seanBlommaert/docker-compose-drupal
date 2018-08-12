@@ -58,27 +58,30 @@ You might want to add these aliases to your ~/.bashrc file (restart terminal to 
 
 ```
 # Aliases for docker drush in web/htdocs/docroot folders
-alias ddrush='docker-compose exec --user 82 php vendor/bin/drush --root=/var/www/html'
-alias ddrupal='docker-compose exec --user 82 php vendor/bin/drupal --root=/var/www/html'
 alias webdrush='docker-compose exec --user 82 php vendor/bin/drush --root=/var/www/html/web'
 alias webdrupal='docker-compose exec --user 82 php vendor/bin/drupal --root=/var/www/html/web'
 alias htdrush='docker-compose exec --user 82 php vendor/bin/drush --root=/var/www/html/htdocs'
 alias htdrupal='docker-compose exec --user 82 php vendor/bin/drupal --root=/var/www/html/htdocs'
+alias ddrush='docker-compose exec --user 82 php vendor/bin/drush --root=/var/www/html'
+alias ddrupal='docker-compose exec --user 82 php vendor/bin/drupal --root=/var/www/html'
 alias docdrush='docker-compose exec --user 82 php vendor/bin/drush --root=/var/www/html/docroot'
 alias docdrupal='docker-compose exec --user 82 php vendor/bin/drupal --root=/var/www/html/docroot'
+alias docbindrush='docker-compose exec --user 82 php bin/drush --root=/var/www/html/docroot'
+alias docbindrupal='docker-compose exec --user 82 php bin/drupal --root=/var/www/html/docroot'
+alias webbindrush='docker-compose exec --user 82 php bin/drush --root=/var/www/html/web'
+alias webbindrupal='docker-compose exec --user 82 php bin/drupal --root=/var/www/html/web'
 
-# Composer in container
+# Aliases for docker composer
 alias dcomposer='docker-compose exec --user 82 php composer'
 
 # Login to container
 alias dlogin='bash -c "clear && docker-compose exec php sh"'
 alias dloginroot='bash -c "clear && docker-compose exec --user 0 php sh"'
 
-# Running web/htdocs/docroot tests
-alias dtests='docker-compose exec --user 82 php php core/scripts/run-tests.sh --php /usr/local/bin/php --color --keep-results --concurrency 1  --verbose'
-alias dwebtests='docker-compose exec --user 82 php php web/core/scripts/run-tests.sh --php /usr/local/bin/php --color --keep-results --concurrency 1  --verbose'
-alias dhttests='docker-compose exec --user 82 php php htdocs/core/scripts/run-tests.sh --php /usr/local/bin/php --color --keep-results --concurrency 1  --verbose'
-alias ddoctests='docker-compose exec --user 82 php php htdocs/core/scripts/run-tests.sh --php /usr/local/bin/php --color --keep-results --concurrency 1  --verbose'
+# Running web/htdocs/docroot PHPUnit tests
+alias dwebtest='docker-compose exec --user 0 php php ./vendor/bin/phpunit -c web/core'
+alias dhttest='docker-compose exec --user 0 php php ./vendor/bin/phpunit -c htdocs/core'
+alias dtest='docker-compose exec --user 0 php php ./vendor/bin/phpunit -c core'
 
 # Starting and stopping general containers
 alias dstart='export MYSQL_DATA=/MY/MYSQL/DATA/FOLDER/data/docker/mysql; cd /PATH/TO/DOCKER-COMPOSE-DRUPAL/common-apps && docker-compose up -d'
@@ -87,7 +90,7 @@ alias dstop='cd /PATH/TO/DOCKER-COMPOSE-DRUPAL/common-apps && docker-compose dow
 # Starting and stopping a project
 # Note the <E2><80><98>dup' alias adds a workaround to provide working DNS for each php-container.
 # Drupal needs this for background_process support etc.
-alias dup='export DOCKERDNS=$(docker inspect -f "{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}" dockerdns); docker-compose up -d'
+alias dup='docker-compose up -d'
 alias ddown='docker-compose down;'
 alias drestart='ddown; dup'
 

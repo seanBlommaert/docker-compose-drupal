@@ -10,15 +10,17 @@ version: "2"
 #
 
 services:
-  proxy:
-    container_name: proxy
-    image: jwilder/nginx-proxy
+  traefik:
+    image: traefik
+    container_name: traefik
+    restart: unless-stopped
+    command: -c /dev/null --web --docker --logLevel=DEBUG
     ports:
-      - 80:80
-      - 443:443
+      - '80:80'
+      - '443:443'
+      - '8080:8080'
     volumes:
-      - /var/run/docker.sock:/tmp/docker.sock:ro
-      - ${NGINX_CONFIG}:/etc/nginx/conf.d/timeouts.conf
+      - /var/run/docker.sock:/var/run/docker.sock
 
   devdns:
     image: jpillora/dnsmasq
@@ -64,6 +66,10 @@ services:
     environment:
       VIRTUAL_HOST: mailhog.develop # This tell global proxy about this container.
       VIRTUAL_PORT: 8025
+    labels:
+      - 'traefik.backend=mailhog'
+      - 'traefik.port=8025'
+      - 'traefik.frontend.rule=Host:mailhog.develop'
 
 #networks:
 #  default:
