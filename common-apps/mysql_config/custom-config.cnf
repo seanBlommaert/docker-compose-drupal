@@ -1,18 +1,20 @@
 [mysqld]
 character_set_server=utf8
 collation_server=utf8_general_ci
-innodb_file_per_table = 1
-innodb_file_format = barracuda
-innodb_buffer_pool_size = 4G
-innodb_log_file_size = 1G
-innodb_log_buffer_size = 128M
-innodb_write_io_threads = 16
-innodb_buffer_pool_instances = 8
-key_buffer              = 36M
-max_allowed_packet      = 125M
-thread_stack            = 192K
-thread_cache_size       = 8
-table_open_cache = 1400
-innodb_lock_wait_timeout = 180
-innodb_flush_log_at_trx_commit = 0
-innodb_support_xa = 0
+
+max_allowed_packet              = 128M
+
+innodb_buffer_pool_size         = 2G
+innodb_log_file_size            = 512M
+innodb_flush_log_at_trx_commit  = 1
+innodb_flush_method             = O_DIRECT
+
+#query_cache_size                = 2MB
+#query_cache_limit               = 64MB
+
+#table_open_cache                = 2048
+#tmp_table_size                  = 128MB
+#max_heap_table_size             = 128MB
+
+#thread_stack                    = 256K
+#thread_cache_size               = 256

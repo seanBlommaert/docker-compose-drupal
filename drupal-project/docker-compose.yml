@@ -12,16 +12,20 @@ services:
       PHP_DOCROOT: ${DOCROOT} # Relative path inside the /var/www/html/ directory.
       PHP_SENDMAIL_PATH: /usr/sbin/sendmail -t -i -S mailhog.develop:1025
       PHP_FPM_MAX_CHILDREN: 16
-      PHP_MEMORY_LIMIT: 1024M
+      PHP_MEMORY_LIMIT: 512M
       PHP_XDEBUG: 1
-      PHP_XDEBUG_DEFAULT_ENABLE: 1              # Renamed from PHP_XDEBUG_ENABLED in latest version.
-      PHP_XDEBUG_REMOTE_AUTOSTART: 1            # Renamed from PHP_XDEBUG_AUTOSTART in latest version.
-      PHP_XDEBUG_REMOTE_CONNECT_BACK: 0         # This is needed to respect remote.host setting bellow
+      PHP_XDEBUG_DEFAULT_ENABLE: 1
+      PHP_XDEBUG_REMOTE_AUTOSTART: 1
+      PHP_XDEBUG_REMOTE_CONNECT_BACK: 0         # This is needed to respect remote.host setting
       PHP_XDEBUG_REMOTE_HOST: host.docker.internal
       PHP_XDEBUG_MAX_NESTING_LEVEL: 2048
+      PHP_XDEBUG_PROFILER_ENABLE: 0
+      PHP_XDEBUG_PROFILER_ENABLE_TRIGGER: 1     # Use ?XDEBUG_PROFILE=1 to enable
       PHP_IDE_CONFIG: serverName=${NAME}.develop
     volumes:
       - ./:/var/www/html:delegated
+      - ./files:/mnt/files
+      - docker-sync:/var/www/html:nocopy
     external_links:
       - mysql
     networks:
@@ -32,14 +36,15 @@ services:
     image: wodby/drupal-nginx:8-1.15
     container_name: ${NAME}-nginx
     environment:
-      VIRTUAL_HOST: ${NAME}.develop # This tell global proxy about this container.
+      VIRTUAL_HOST: ${NAME}.develop
       NGINX_BACKEND_HOST: ${NAME}-php
       NGINX_BACKEND_PORT: 9000
       NGINX_SERVER_NAME: ${NAME}.develop
       NGINX_SERVER_ROOT: /var/www/html/${DOCROOT}
-      DRUPAL_VERSION: ${DRUPAL_VERSION}  # Allowed: 7, 8.
+      NGINX_ERROR_LOG_LEVEL: debug
     volumes:
       - ./:/var/www/html:delegated
+      - docker-sync:/var/www/html:nocopy
     labels:
       - 'traefik.backend=${NAME}-nginx'
       - 'traefik.port=80'
@@ -123,32 +128,55 @@ services:
 #    ports:
 #      - "8002:8025"
 
-#  redis:
-#    image: redis:3.2-alpine
-
 #  memcached:
-#    image: memcached:1.4-alpine
+#    image: wodby/memcached:1.5-2.1.1
+#    container_name: ${NAME}-memcached
+#    ports:
+#      - "11211:11211"
+#    labels:
+#      - 'traefik.backend=${NAME}-memcached'
+#      - 'traefik.port=11211'
+#      - 'traefik.frontend.rule=Host:${NAME}-memcached.develop'
+#    command: ['-m', '512m']
 
 #  memcached-admin:
-#    image: phynias/phpmemcachedadmin
+#    image: jacksoncage/phpmemcachedadmin
+#    container_name: ${NAME}-memcached-admin
+#    environment:
+#      MEMCACHED_SERVER: ${NAME}-memcached
+#    volumes:
+#      - ./docker-memcache.php:/phpmemcachedadmin/Config/Memcache.php
 #    ports:
-#      - "8006:80"
+#      - "8600:80"
+#    labels:
+#      - 'traefik.backend=${NAME}-memcached'
+#      - 'traefik.port=8600'
+#      - 'traefik.frontend.rule=Host:${NAME}-memcached-admin.develop'
+
+#  redis:
+#    image: redis:3.2-alpine
 
 #  clamd:
 #    image: dinkel/clamavd
 #    container_name: ${NAME}-clamav
 
-#  pma:
-#    image: phpmyadmin/phpmyadmin
+#  webgrind:
+#    image: wodby/webgrind:$WEBGRIND_TAG
+#    container_name: ${NAME}-webgrind
 #    environment:
-#      PMA_HOST: mariadb
-#      PMA_USER: drupal
-#      PMA_PASSWORD: drupal
-#      PHP_UPLOAD_MAX_FILESIZE: 1G
-#      PHP_MAX_INPUT_VARS: 1G
-#     ports:
-#     - "8001:80"
+#      WEBGRIND_PROFILER_DIR: /mnt/files/xdebug/profiler
+#    labels:
+#      - 'traefik.backend=webgrind'
+#      - 'traefik.port=8080'
+#      - 'traefik.frontend.rule=Host:${NAME}-webgrind.develop'
+#    volumes:
+#      - files:/mnt/files
 
 networks:
   commonapps_default:
     external: true
+
+volumes:
+  docker-sync:
+    external:
+      name: "${NAME}-sync"

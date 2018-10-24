@@ -45,14 +45,15 @@ services:
 
   mysql:
     container_name: mysql
-    image: mysql:5.6.26
+    image: mysql:${MYSQL_TAG}
     ports:
       - "3306:3306"
     environment:
       MYSQL_ROOT_PASSWORD: root
     volumes:
-      - ${MYSQL_DATA}:/var/lib/mysql
-      - ${MYSQL_CONFIG}:/etc/mysql/conf.d
+      - ${MYSQL_DATA}:/var/lib/mysql:delegated
+      - ${MYSQL_CONFIG}:/etc/mysql/conf.d:cached
+      - common-sync:/var/lib/mysql:nocopy
 #      MYSQL_DATABASE: drupal
 #      MYSQL_USER: drupal
 #      MYSQL_PASSWORD: drupal
@@ -75,3 +76,7 @@ services:
 #  default:
 #    external:
 #      name: bridge
+
+volumes:
+  common-sync:
+    external: true
